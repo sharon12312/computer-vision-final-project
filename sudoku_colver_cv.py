@@ -74,8 +74,48 @@ class SudokuSolverCV:
             # store the coordinate's cell
             cell_coordinates.append(row)
 
-        print(Sudoku(board.tolist()).print())
+        # displays the sudoku board after using the OCR operation
+        sudoku = Sudoku(board.tolist())
+        print('# Sudoku Board #')
+        sudoku.print()
+
+        # solve the sudoku and display the solution if exists
+        sudoku_solution = sudoku.solve_sudoku()
+        if sudoku_solution is not None:
+            print('# Sudoku Board Solution #')
+            sudoku.print()
+        else:
+            print('Sudoku solution not found.')
+
+        # initial the boolean sudoku board existence
+        board_digit_exists = np.array(board, dtype=bool).tolist()
+
+        # display the solution on the sudoku warped transformed image
+        for (cell_row, board_row, digit_exists_row) in zip(cell_coordinates, sudoku_solution, board_digit_exists):
+            for (box, digit, digit_exists) in zip(cell_row, board_row, digit_exists_row):
+                # put text only within the empty cell
+                if not digit_exists:
+                    # extract the cell's coordinates
+                    start_j, start_i, end_j, end_i = box
+
+                    # compute the coordinates for locating the drawn digit within the image
+                    text_j = int((end_j - start_j) * 0.32)
+                    text_i = int((end_i - start_i) * -0.18)
+                    text_j += start_j  # add ~30% to the start width position
+                    text_i += end_i  # add ~20% to the start height position
+
+                    # compute the font scale for the image
+                    cell_height, cell_width, scale = end_i - start_i, end_j - start_j, 1
+                    font_scale = min(cell_width, cell_height) / (50 / scale)
+
+                    # draw the result digit on the sudoku warped transformed image
+                    cv2.putText(img=warped_sudoku_board, text=str(digit), org=(text_j, text_i),
+                                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(205, 0, 0), thickness=2)
+
+        # show the output image
+        cv2.imshow('Sudoku Result', warped_sudoku_board)
+        cv2.waitKey(0)
 
 
 sudoku_solver_cv = SudokuSolverCV()
-sudoku_solver_cv.run(image_path='./images/sudoku1.jpg', debug=False)
+sudoku_solver_cv.run(image_path='./images/sudoku5.jpg', debug=False)

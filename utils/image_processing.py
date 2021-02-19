@@ -11,8 +11,8 @@ class ImageProcessing:
 
     Code example:
         image = cv2.imread('../images/sudoku1.jpg')
-        utils = Utils()
-        utils.find_sudoku_board_contours(image=image, debug=True)
+        img_processing = ImageProcessing()
+        img_processing.find_sudoku_board_contours(image=image, debug=True)
     """
     def __init__(self):
         pass
@@ -23,6 +23,7 @@ class ImageProcessing:
         Get the contours object based on the OpenCV version. If the length of the contours tuple returned
         by cv2.findContours is 2, then we are using either OpenCV v2.4, v4-beta, or v4-official, and if the
         length of the contours tuple is 3, then we are using either OpenCV v3, v4-pre, or v4-alpha.
+
         :param cnts: list
         :return: list
         """
@@ -39,7 +40,9 @@ class ImageProcessing:
     @staticmethod
     def adapt_points_in_img_order(points):
         """
-        Initialize a list of coordinates including the points in order: top-left, top-right, bottom-right, and bottom-left.
+        Initialize a list of coordinates including the points in order:
+            top-left, top-right, bottom-right, and bottom-left.
+
         :param points: ndarray, that contains a list of 4 points
         :return: ndarray, that contains the list of points by order: top-left, top-right, bottom-right, and bottom-left.
         """
@@ -47,12 +50,14 @@ class ImageProcessing:
         # initial variables
         rectangle_points = np.zeros((4, 2), dtype='float32')
 
-        # the top-left point will have the smallest sum, whereas the bottom-right point will have the largest sum
+        # the top-left point will have the smallest sum,
+        # whereas the bottom-right point will have the largest sum
         pts_sum = points.sum(axis=1)
         rectangle_points[0] = points[np.argmin(pts_sum)]
         rectangle_points[2] = points[np.argmax(pts_sum)]
 
-        # the top-right point will have the smallest difference, whereas the bottom-left will have the largest difference
+        # the top-right point will have the smallest difference,
+        # whereas the bottom-left will have the largest difference
         pts_diff = np.diff(points, axis=1)
         rectangle_points[1] = points[np.argmin(pts_diff)]
         rectangle_points[3] = points[np.argmax(pts_diff)]
@@ -63,13 +68,15 @@ class ImageProcessing:
     def get_max_width(top_left, top_right, bottom_left, bottom_right):
         """
         Compute the width of an image using a euclidean distance, which will be the maximum distance between
-        the bottom-right and bottom-left x-coordinates or the top-right and top-left x-coordinates
+        the bottom-right and bottom-left x-coordinates or the top-right and top-left x-coordinates.
+
         :param top_left: ndarray
         :param top_right: ndarray
         :param bottom_left: ndarray
         :param bottom_right: ndarray
         :return: the maximum width
         """
+
         width_a = np.sqrt(((bottom_right[0] - bottom_left[0]) ** 2) + ((bottom_right[1] - bottom_left[1]) ** 2))
         width_b = np.sqrt(((top_right[0] - top_left[0]) ** 2) + ((top_right[1] - top_left[1]) ** 2))
         return max(int(width_a), int(width_b))
@@ -78,22 +85,31 @@ class ImageProcessing:
     def get_max_height(top_left, top_right, bottom_left, bottom_right):
         """
         Compute the height of an image using a euclidean distance, which will be the maximum distance between
-        the top-right and bottom-right y-coordinates or the top-left and bottom-left y-coordinates
+        the top-right and bottom-right y-coordinates or the top-left and bottom-left y-coordinates.
+
         :param top_left: ndarray
         :param top_right: ndarray
         :param bottom_left: ndarray
         :param bottom_right: ndarray
         :return: the maximum height
         """
+
         height_a = np.sqrt(((top_right[0] - bottom_right[0]) ** 2) + ((top_right[1] - bottom_right[1]) ** 2))
         height_b = np.sqrt(((top_left[0] - bottom_left[0]) ** 2) + ((top_left[1] - bottom_left[1]) ** 2))
         return max(int(height_a), int(height_b))
 
     @staticmethod
-    def improve_quality_image(image):
+    def generate_fixed_image(image):
         """
         Enhance the digit image since the digit can be localized in the top/bottom or thin/thick within the image.
         This function improves the classification of the image using the CNN model.
+
+        Utils:
+        * cv2.boundingRect() function for locating the digit within the image.
+        * cv2.copyMakeBorder() function for boundary handling when generate a new clearer digit image.
+        * cv2.getStructuringElement() function for computing the structuring element (kernel)
+            when using the erosion function.
+
         :param image: ndarray, contains the digit image
         :return: ndarray, the fixed digit image
         """
@@ -104,6 +120,7 @@ class ImageProcessing:
         # extract the digit (roi = region of interest)
         roi = image[y:y + h, x:x + w]
 
+        # sets the padding of the new image border from the digit object within the image
         h, w = image.shape
         if h > w:
             top, left = round(h * 0.2), round((1.4 * h - w) / 2)
@@ -113,7 +130,7 @@ class ImageProcessing:
         # simplify image boundary handling, covert the image into the middle
         digit = cv2.resize(cv2.copyMakeBorder(roi, top, top, left, left, cv2.BORDER_CONSTANT), (500, 750))
 
-        # thinning the digit within the image
+        # thinning the digit within the image, using 5x5 kernel and erosion
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         image = cv2.erode(digit, kernel, iterations=1)
 
@@ -123,6 +140,13 @@ class ImageProcessing:
         """
         Generate a straight plain shape image according to the contour points that are defined in a consistent
         ordering representation.
+
+        Utils:
+        * cv2.getPerspectiveTransform() function computes a perspective transform matrix from four pairs of the
+            corresponding points.
+        * cv2.warpPerspective() function transforms the source image using the specified matrix and return the
+            warped image.
+
         :param image: ndarray, contains the image values
         :param points: ndarray, contains the contour points by order
         :return: ndarray, a warped image that presents the straight plain image according to the contours points
@@ -144,32 +168,51 @@ class ImageProcessing:
             [0, max_height - 1]], dtype='float32')
 
         # compute the perspective transform matrix
-        M = cv2.getPerspectiveTransform(rectangle_points, destination_points)
+        M = cv2.getPerspectiveTransform(src=rectangle_points, dst=destination_points)
 
         # warp the destination image based on the perspective matrix
-        warped_image = cv2.warpPerspective(image, M, (max_width, max_height))
+        warped_image = cv2.warpPerspective(src=image, M=M, dsize=(max_width, max_height))
 
         return warped_image
 
     def find_sudoku_board_contours(self, image, debug=False):
         """
-        Detect contours in the input image, and object localization, in order to find the sudoku board puzzle
-        :param image: ndarray
-        :param debug: boolean, for visualization
-        :return: the warped RGB and gray transformed images, and the board contours coordinates
+        Detect contours in the input image, and object localization, in order to find the sudoku board puzzle.
+
+        Utils:
+        * cv2.GaussianBlur() function smooths the image (by the x-axis) using a Gaussian kernel for removing noises.
+        * cv2.adaptiveThreshold() function applies an adaptive threshold (transforms a grayscale image to a binary image)
+            - maxValue: Non-zero value assigned to the pixels for which the condition is satisfied.
+            - adaptiveMethod: cv2.ADAPTIVE_THRESH_GAUSSIAN_C is a threshold value which means a Gaussian-weighted sum
+                of the neighbourhood values (constant value).
+            - thresholdType: cv2.THRESH_BINARY is the basic thresholding technique is Binary Thresholding. For every
+                pixel, the same threshold value is applied.
+            - blockSize: 11, the size of a pixel neighborhood that is used to compute a threshold value for the pixel.
+            - C constant subtracted from the mean or weighted mean.
+        * cv2.findContours() function for finding contours in a binary image.
+            - mode: cv2.RETR_EXTERNAL retrieves only the extreme outer contours.
+            - method: cv2.CHAIN_APPROX_SIMPLE removes all redundant points and compresses the contour (saving memory).
+        * cv2.arcLength() function computes a curve length or a closed contour perimeter.
+        * cv2.approxPolyDP() function approximates a curve or a polygon with another curve/polygon with less vertices
+            so that the distance between them is less or equal to the specified precision.
+
+        :param image: ndarray, the input image
+        :param debug: boolean, for visualization purposes
+        :return: tuple, the warped RGB and gray transformed images, and the board contours coordinates
         """
 
         # convert the image to grayscale
         gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # blur the image using a Gaussian kernel to remove noises
-        blurred_img = cv2.GaussianBlur(gray_img, (7, 7), 3)
+        blurred_img = cv2.GaussianBlur(src=gray_img, ksize=(7, 7), sigmaX=3)
 
         if debug:
             cv2.imshow('Blurred Image', blurred_img)
             cv2.waitKey(0)
 
         # apply adaptive thresholding, that transforms a grayscale image to a binary image
-        thresh = cv2.adaptiveThreshold(blurred_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        thresh = cv2.adaptiveThreshold(src=blurred_img, maxValue=255, adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                       thresholdType=cv2.THRESH_BINARY, blockSize=11, C=2)
 
         if debug:
             cv2.imshow('Sudoku Board Thresholded (before convert)', thresh)
@@ -183,7 +226,7 @@ class ImageProcessing:
             cv2.waitKey(0)
 
         # find the sudoku board's contours in the thresholded image, using the RETR_EXTERNAL method
-        contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
         contours = self.get_contours(contours)
 
         # sort the sudoku board's contours by size in descending order
@@ -194,9 +237,9 @@ class ImageProcessing:
 
         for c in contours:
             # determine the perimeter of the contour
-            perimeter = cv2.arcLength(c, closed=True)
+            perimeter = cv2.arcLength(curve=c, closed=True)
             # approximate the contour
-            approx = cv2.approxPolyDP(c, 0.02 * perimeter, closed=True)
+            approx = cv2.approxPolyDP(curve=c, epsilon=0.02 * perimeter, closed=True)
 
             # if our approximated contour has four points, then we can assume that
             # we have found the outline of the sudoku board
@@ -234,13 +277,24 @@ class ImageProcessing:
         Generate a greyscale digit image according to the given image cell. The image cell can contain a digit,
         then the function will create a specific mask for obtaining the greyscale digit image, or the image cell
         can be empty, in this case, the function return None.
+
+        Utils:
+        * cv2.threshold() function for applying a fixed-level threshold (get a binary image out of a grayscale image).
+            - type: cv2.THRESH_BINARY_INV inverses the binary image (from black to white and vice versa).
+                    cv2.THRESH_OTSU finds the optimal threshold value.
+        * skimage.segmentation.clear_border() function for clearing objects connected to the label image border.
+        * cv2.findContours() function for finding contours in a binary image.
+            - mode: cv2.RETR_EXTERNAL retrieves only the extreme outer contours.
+            - method: cv2.CHAIN_APPROX_SIMPLE removes all redundant points and compresses the contour (saving memory).
+        * cv2.drawContours() function draws contour outlines within the image.
+
         :param cell: ndarray, presents the cell digit (if exists)
         :param debug: boolean, for visualization
         :return: ndarray, digit image
         """
 
         # apply thresholding to the cell
-        thresh = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        thresh = cv2.threshold(src=cell, thresh=0, maxval=255, type=cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 
         # clear objects connected to the label image border
         thresh = clear_border(thresh)
@@ -250,7 +304,7 @@ class ImageProcessing:
             cv2.waitKey(0)
 
         # find contours in the thresholded cell
-        contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
         contours = self.get_contours(contours)
 
         # if no contours were found than this is an empty cell
@@ -262,23 +316,28 @@ class ImageProcessing:
 
         # initial a mask for the contour
         mask = np.zeros(thresh.shape, dtype='uint8')
-        cv2.drawContours(mask, [max_contour], -1, 255, -1)
+        cv2.drawContours(image=mask, contours=[max_contour], contourIdx=-1, color=255, thickness=-1)
 
-        # if the masked pixels (relative to the total area of the image) is filled less than 5% of the total mask,
+        # if the masked pixels (relative to the total area of the image) is filled less than 2.6% of the total mask,
         # then we consider it as noise
         h, w = thresh.shape
         mask_filled = cv2.countNonZero(mask) / float(w * h)
-        if mask_filled < 0.03:
+        if mask_filled < 0.026:
             return None
 
-        # apply the mask on the thresholded cell
+        # apply the mask on the thresholded cell, this way it makes certain pixels in the image to be black
+        # according to our mask (when merging them together)
         digit = cv2.bitwise_and(thresh, thresh, mask=mask)
 
-        # improve the quality of the digit image
-        digit = self.improve_quality_image(digit)
+        if debug:
+            cv2.imshow('Sudoku Digit (Before Fixing)', digit)
+            cv2.waitKey(0)
+
+        # the final step is to generate a new fixed digit image from the basic mask, for the classification improvement
+        digit = self.generate_fixed_image(digit)
 
         if debug:
-            cv2.imshow('Sudoku Digit', digit)
+            cv2.imshow('Sudoku Digit (After Fixing)', digit)
             cv2.waitKey(0)
 
         return digit

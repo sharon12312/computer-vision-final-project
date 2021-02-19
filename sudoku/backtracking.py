@@ -118,10 +118,11 @@ class Sudoku:
                not self._validate_col(col, num) and \
                not self._validate_box(row - row % 3, col - col % 3, num)
 
-    def solve(self):
+    def _solve(self):
         """
         Gets a partially filled-in sudoku board and strives to assign values to all unassigned locations in such
         a way to meet the requirements for the sudoku solution (non-duplication across rows, columns, and boxes).
+
         :return: boolean, if the solution is valid return True, otherwise False
         """
 
@@ -143,7 +144,7 @@ class Sudoku:
                 self._board[row][col] = num
 
                 # consider as success, if a solution exists
-                if self.solve():
+                if self._solve():
                     return True
 
                 # consider as failure, and follow the next digit
@@ -151,6 +152,16 @@ class Sudoku:
 
         # apply the backtracking method
         return False
+
+    def solve_sudoku(self):
+        """
+        Solves the sudoku puzzle.
+        :return: list, return the solution array if exists, otherwise return None
+        """
+        if self._solve():
+            return self.get_board()
+        else:
+            return None
 
     def print(self):
         """
@@ -169,6 +180,7 @@ class Sudoku:
                     print(self._board[i][j])
                 else:
                     print(self._board[i][j], end=' ')
+        print('\n')
 
     def get_board(self):
         """
