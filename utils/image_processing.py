@@ -4,7 +4,7 @@ import cv2
 from skimage.segmentation import clear_border
 
 
-class Utils:
+class ImageProcessing:
     """
     Utils class provides helper functions for image processing including perspective transform using 4 points,
     object localization, and contours detections.
@@ -37,7 +37,7 @@ class Utils:
         return cnts
 
     @staticmethod
-    def order_points(points):
+    def adapt_points_in_img_order(points):
         """
         Initialize a list of coordinates including the points in order: top-left, top-right, bottom-right, and bottom-left.
         :param points: ndarray, that contains a list of 4 points
@@ -89,6 +89,36 @@ class Utils:
         height_b = np.sqrt(((top_left[0] - bottom_left[0]) ** 2) + ((top_left[1] - bottom_left[1]) ** 2))
         return max(int(height_a), int(height_b))
 
+    @staticmethod
+    def improve_quality_image(image):
+        """
+        Enhance the digit image since the digit can be localized in the top/bottom or thin/thick within the image.
+        This function improves the classification of the image using the CNN model.
+        :param image: ndarray, contains the digit image
+        :return: ndarray, the fixed digit image
+        """
+
+        # computes the up-right bounding rectangle
+        x, y, w, h = cv2.boundingRect(image)
+
+        # extract the digit (roi = region of interest)
+        roi = image[y:y + h, x:x + w]
+
+        h, w = image.shape
+        if h > w:
+            top, left = round(h * 0.2), round((1.4 * h - w) / 2)
+        else:
+            top, left = round(w * 0.2), round((1.4 * w - h) / 2)
+
+        # simplify image boundary handling, covert the image into the middle
+        digit = cv2.resize(cv2.copyMakeBorder(roi, top, top, left, left, cv2.BORDER_CONSTANT), (500, 750))
+
+        # thinning the digit within the image
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        image = cv2.erode(digit, kernel, iterations=1)
+
+        return image
+
     def perspective_transform(self, image, points):
         """
         Generate a straight plain shape image according to the contour points that are defined in a consistent
@@ -99,7 +129,7 @@ class Utils:
         """
 
         # obtain a consistent order of the points and unpack them individually
-        rectangle_points = self.order_points(points)
+        rectangle_points = self.adapt_points_in_img_order(points)
         (top_left, top_right, bottom_right, bottom_left) = rectangle_points
 
         # compute the max width and height of the destination image
@@ -134,13 +164,22 @@ class Utils:
         # blur the image using a Gaussian kernel to remove noises
         blurred_img = cv2.GaussianBlur(gray_img, (7, 7), 3)
 
+        if debug:
+            cv2.imshow('Blurred Image', blurred_img)
+            cv2.waitKey(0)
+
         # apply adaptive thresholding, that transforms a grayscale image to a binary image
         thresh = cv2.adaptiveThreshold(blurred_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        if debug:
+            cv2.imshow('Sudoku Board Thresholded (before convert)', thresh)
+            cv2.waitKey(0)
+
         # invert the thresholded map to get a white sudoku board on a black background
         thresh = cv2.bitwise_not(thresh)
 
         if debug:
-            cv2.imshow('Sudoku Board Threshold', thresh)
+            cv2.imshow('Sudoku Board Threshold (after convert)', thresh)
             cv2.waitKey(0)
 
         # find the sudoku board's contours in the thresholded image, using the RETR_EXTERNAL method
@@ -186,7 +225,7 @@ class Utils:
             cv2.waitKey(0)
 
         # compute the board coordinates by order (for applying the AR)
-        board_coordinates = self.order_points(board_contours.reshape(4, 2))
+        board_coordinates = self.adapt_points_in_img_order(board_contours.reshape(4, 2))
 
         return sudoku_board_img_perspective, sudoku_board_gray_img_perspective, board_coordinates
 
@@ -202,6 +241,7 @@ class Utils:
 
         # apply thresholding to the cell
         thresh = cv2.threshold(cell, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
         # clear objects connected to the label image border
         thresh = clear_border(thresh)
 
@@ -228,11 +268,14 @@ class Utils:
         # then we consider it as noise
         h, w = thresh.shape
         mask_filled = cv2.countNonZero(mask) / float(w * h)
-        if mask_filled < 0.05:
+        if mask_filled < 0.03:
             return None
 
         # apply the mask on the thresholded cell
         digit = cv2.bitwise_and(thresh, thresh, mask=mask)
+
+        # improve the quality of the digit image
+        digit = self.improve_quality_image(digit)
 
         if debug:
             cv2.imshow('Sudoku Digit', digit)
