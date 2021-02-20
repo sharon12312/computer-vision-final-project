@@ -177,7 +177,7 @@ class ImageProcessing:
 
     def find_sudoku_board_contours(self, image, debug=False):
         """
-        Detect contours in the input image, and object localization, in order to find the sudoku board puzzle.
+        Detect contours in the input image, and object localization, in order to find the sudoku board.
 
         Utils:
         * cv2.GaussianBlur() function smooths the image (by the x-axis) using a Gaussian kernel for removing noises.
@@ -232,7 +232,7 @@ class ImageProcessing:
         # sort the sudoku board's contours by size in descending order
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-        # initialize a contour that corresponds to the puzzle outline
+        # initialize a contour that corresponds to the sudoku board outline
         board_contours = None
 
         for c in contours:
@@ -248,7 +248,7 @@ class ImageProcessing:
                 break
 
         if board_contours is None:
-            raise Exception('Could not found the Sudoku board puzzle in the image.')
+            raise Exception('Could not found the Sudoku board in the image.')
 
         if debug:
             # draw the contour upon the sudoku board in the image

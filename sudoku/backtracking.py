@@ -3,7 +3,7 @@ import numpy as np
 
 class Sudoku:
     """
-    The function uses a backtracking method.
+    The class uses a backtracking method.
     The solution can be done by assigning a number, but before it, we need to check whether it is safe to assign
     and if the same number is not present in the current row, current column, and the current 3X3 sub-grid.
     After checking for safety, assign the number, and recursively check whether this assignment leads to a solution or
@@ -155,7 +155,7 @@ class Sudoku:
 
     def solve_sudoku(self):
         """
-        Solves the sudoku puzzle.
+        Solves the sudoku board.
         :return: list, return the solution array if exists, otherwise return None
         """
         if self._solve():
