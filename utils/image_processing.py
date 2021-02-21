@@ -18,26 +18,6 @@ class ImageProcessing:
         pass
 
     @staticmethod
-    def get_contours(cnts):
-        """
-        Get the contours object based on the OpenCV version. If the length of the contours tuple returned
-        by cv2.findContours is 2, then we are using either OpenCV v2.4, v4-beta, or v4-official, and if the
-        length of the contours tuple is 3, then we are using either OpenCV v3, v4-pre, or v4-alpha.
-
-        :param cnts: list
-        :return: list
-        """
-
-        if len(cnts) == 2:
-            cnts = cnts[0]
-        elif len(cnts) == 3:
-            cnts = cnts[1]
-        else:
-            raise Exception('Unknown error: contours tuple must have length of 2 or 3.')
-
-        return cnts
-
-    @staticmethod
     def adapt_points_in_img_order(points):
         """
         Initialize a list of coordinates including the points in order:
@@ -127,7 +107,7 @@ class ImageProcessing:
         else:
             top, left = round(w * 0.2), round((1.4 * w - h) / 2)
 
-        # simplify image boundary handling, covert the image into the middle
+        # simplify image boundary handling, convert the image into the middle
         digit = cv2.resize(cv2.copyMakeBorder(roi, top, top, left, left, cv2.BORDER_CONSTANT), (500, 750))
 
         # thinning the digit within the image, using 5x5 kernel and erosion
@@ -160,7 +140,7 @@ class ImageProcessing:
         max_width = self.get_max_width(top_left, top_right, bottom_left, bottom_right)
         max_height = self.get_max_height(top_left, top_right, bottom_left, bottom_right)
 
-        # construct the set of destination points to obtain a top-down view of the image
+        # construct the set of destination points to obtain the straight plain image
         destination_points = np.array([
             [0, 0],
             [max_width - 1, 0],
@@ -203,6 +183,7 @@ class ImageProcessing:
 
         # convert the image to grayscale
         gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
         # blur the image using a Gaussian kernel to remove noises
         blurred_img = cv2.GaussianBlur(src=gray_img, ksize=(7, 7), sigmaX=3)
 
@@ -215,19 +196,20 @@ class ImageProcessing:
                                        thresholdType=cv2.THRESH_BINARY, blockSize=11, C=2)
 
         if debug:
-            cv2.imshow('Sudoku Board Thresholded (before convert)', thresh)
+            cv2.imshow('Sudoku Board Thresholded (before inverse operation)', thresh)
             cv2.waitKey(0)
 
         # invert the thresholded map to get a white sudoku board on a black background
         thresh = cv2.bitwise_not(thresh)
 
         if debug:
-            cv2.imshow('Sudoku Board Threshold (after convert)', thresh)
+            cv2.imshow('Sudoku Board Threshold (after inverse operation)', thresh)
             cv2.waitKey(0)
 
         # find the sudoku board's contours in the thresholded image, using the RETR_EXTERNAL method
-        contours = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
-        contours = self.get_contours(contours)
+        # if the length of the contours tuple is 2, then we are using either OpenCV v2.4, v4-beta, or v4-official
+        # if the length of the contours tuple is 3, then we are using either OpenCV v3, v4-pre, or v4-alpha
+        contours, _ = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
 
         # sort the sudoku board's contours by size in descending order
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
@@ -304,8 +286,9 @@ class ImageProcessing:
             cv2.waitKey(0)
 
         # find contours in the thresholded cell
-        contours = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
-        contours = self.get_contours(contours)
+        # if the length of the contours tuple is 2, then we are using either OpenCV v2.4, v4-beta, or v4-official
+        # if the length of the contours tuple is 3, then we are using either OpenCV v3, v4-pre, or v4-alpha
+        contours, _ = cv2.findContours(image=thresh.copy(), mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
 
         # if no contours were found than this is an empty cell
         if len(contours) == 0:
