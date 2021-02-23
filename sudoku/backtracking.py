@@ -10,19 +10,19 @@ class Sudoku:
     not. If the assignment does not lead to a solution, then try the next number for the current empty cell.
     And if none of the numbers (1 to 9) leads to a solution, return false.
 
-    Code Example:
-    sudoku_board = [[3, 0, 6, 5, 0, 8, 4, 0, 0],
-                    [5, 2, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 8, 7, 0, 0, 0, 0, 3, 1],
-                    [0, 0, 3, 0, 1, 0, 0, 8, 0],
-                    [9, 0, 0, 8, 6, 3, 0, 0, 5],
-                    [0, 5, 0, 0, 9, 0, 6, 0, 0],
-                    [1, 3, 0, 0, 0, 0, 2, 5, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 7, 4],
-                    [0, 0, 5, 2, 0, 6, 3, 0, 0]]
-    sudoku = Sudoku(sudoku_board)
-    sudoku.solve()
-    sudoku.print()
+    Code example:
+        sudoku_board = [[3, 0, 6, 5, 0, 8, 4, 0, 0],
+                        [5, 2, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 8, 7, 0, 0, 0, 0, 3, 1],
+                        [0, 0, 3, 0, 1, 0, 0, 8, 0],
+                        [9, 0, 0, 8, 6, 3, 0, 0, 5],
+                        [0, 5, 0, 0, 9, 0, 6, 0, 0],
+                        [1, 3, 0, 0, 0, 0, 2, 5, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 7, 4],
+                        [0, 0, 5, 2, 0, 6, 3, 0, 0]]
+        sudoku = Sudoku(sudoku_board)
+        sudoku.solve()
+        sudoku.print()
     """
     def __init__(self, board):
         # setting the sudoku board variable

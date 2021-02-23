@@ -72,13 +72,13 @@ class AugmentedReality:
             cv2.waitKey(0)
 
         # scale the mask image
-        mask_scaled = mask.copy() / 255.0
+        scaled_mask = mask.copy() / 255.0
 
         # creates a 3D matrix of the mask in order to copy the warped source image within the colored destination image
-        mask_scaled = np.dstack([mask_scaled] * 3)
+        scaled_mask = np.dstack([scaled_mask] * 3)
 
         # multiply both source warped image and the mask
-        src_warped_multiplied = cv2.multiply(homography_warped.astype('float'), mask_scaled)
+        src_warped_multiplied = cv2.multiply(homography_warped.astype('float'), scaled_mask)
 
         if debug:
             # visualization for the warped multiplied result
@@ -87,7 +87,7 @@ class AugmentedReality:
 
         # multiply the destination image with the mask,
         # providing more weight to the pixels which are not from the mask image
-        dst_multiplied = cv2.multiply(dst_img.astype(float), 1.0 - mask_scaled)
+        dst_multiplied = cv2.multiply(dst_img.astype(float), 1.0 - scaled_mask)
 
         if debug:
             # visualization for the warped multiplied result

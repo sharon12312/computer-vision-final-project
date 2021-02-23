@@ -216,8 +216,8 @@ class SudokuSolverCV:
             2. Sudoku Solver:
                 a. Sudoku matrix creation according to the OCR.
                 b. Sudoku solver algorithm that performs the sudoku matrix solution.
-            3. Image Result Creation:
-                a. Placeholder the solution’s digits onto the straight plain image.
+            3. A Straight Plain Image Result Creation (Image Processing):
+                a. Localize the solution’s digits onto the straight plain image.
             4. Augmented Reality:
                 a. Merge/overlay the solution result upon the original image using both destination and source images.
 
@@ -267,12 +267,13 @@ class SudokuSolverCV:
 
 if __name__ == '__main__':
     # display the input image
-    image_path = './images/sudoku1.jpg'
+    image_path = './images/sudoku2.jpg'
     input_image = cv2.imread(image_path)
     cv2.imshow('Input Sudoku', input_image)
     cv2.waitKey(0)
 
     sudoku_solver_cv = SudokuSolverCV()
     final_result_img = sudoku_solver_cv.run(image_path=image_path, debug=False)
+    cv2.imwrite('results/sudoku5-result.jpg', final_result_img)
     cv2.imshow('Final Sudoku Result', final_result_img)
     cv2.waitKey(0)
