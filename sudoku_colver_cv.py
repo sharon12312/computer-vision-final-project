@@ -1,6 +1,9 @@
 import numpy as np
 import cv2
 
+import os
+import argparse
+
 from utils.image_processing import ImageProcessing
 from neural_networks.cnn import DigitsNet
 from sudoku.backtracking import Sudoku
@@ -33,13 +36,13 @@ class SudokuSolverCV:
         self._MAX_COL = 9
 
     @staticmethod
-    def _solve_sudoku_matrix(board, display=False):
+    def _solve_sudoku_matrix(board, debug=False):
         """
         Solve the sudoku board matrix using the Sudoku class. The class performs a sudoku solver algorithm and
         returns the solution matrix if exists.
 
         :param board: ndarray, the sudoku matrix 2d array
-        :param display: boolean, for the board visualization in the terminal
+        :param debug: boolean, for the board visualization in the terminal
         :return: tuple (ndarray, boolean),
             - the solved sudoku matrix if exists, otherwise return None
             - if True, the sudoku was solved successfully, otherwise False
@@ -48,7 +51,7 @@ class SudokuSolverCV:
         # initial the sudoku class based on the OCR operation
         sudoku = Sudoku(board.tolist())
 
-        if display:
+        if debug:
             # displays the sudoku board
             print('# Sudoku Board #')
             sudoku.print()
@@ -57,7 +60,7 @@ class SudokuSolverCV:
         sudoku_solution = sudoku.solve_sudoku()
         solved = sudoku_solution is not None
 
-        if display:
+        if debug:
             if solved:
                 # displays the solved sudoku board
                 print('# Sudoku Board Solution #')
@@ -237,12 +240,14 @@ class SudokuSolverCV:
         board, cell_coordinates = self._character_recognition_and_cell_coordinates(warped_sudoku_board_gray, debug)
 
         # solve the sudoku and display the solution if exists
-        sudoku_solution, solved = self._solve_sudoku_matrix(board, display=True)
+        sudoku_solution, solved = self._solve_sudoku_matrix(board, debug=debug)
 
         # if the sudoku was not solved print an info message and return
         if not solved:
-            print('Sudoku solution not found.')
+            print(f'{__class__.__name__} INFO: a sudoku solution has not been found.')
             return None
+        else:
+            print(f'{__class__.__name__} INFO: a sudoku solution has been found.')
 
         # return the drawn warped sudoku board solution
         warped_sudoku_board = \
@@ -265,15 +270,52 @@ class SudokuSolverCV:
         return final_result_warped_image
 
 
-if __name__ == '__main__':
-    # display the input image
-    image_path = './images/sudoku2.jpg'
-    input_image = cv2.imread(image_path)
-    cv2.imshow('Input Sudoku', input_image)
-    cv2.waitKey(0)
+def main():
+    # define the given arguments variables: image-path, save-mode, visualize-mode and debug-mode
+    args_parser = argparse.ArgumentParser(description='Performs an augmented solution within a given '
+                                                      'sudoku board image.')
+    args_parser.add_argument('-i', '--image',  required=True,
+                             help='the path to the input sudoku image')
+    args_parser.add_argument('-s', '--save', type=bool, default=True,
+                             help='save the augmented solved sudoku output image')
+    args_parser.add_argument('-v', '--visualize', type=bool, default=True,
+                             help='display the input image and the augmented solved sudoku output image')
+    args_parser.add_argument('-d', '--debug', type=bool, default=False,
+                             help='visualization of the flow steps images')
+    args = vars(args_parser.parse_args())
 
+    # initial args
+    image_path = args['image']
+    display = args['visualize']
+    save = args['save']
+    debug = args['debug']
+
+    # validate the image files extensions, if it is not an image then exit the program
+    if not image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+        print(f'Main ERROR: the input image does not contain the suffix images: [.png, .jpg, .jpeg, .tiff, .bmp, .gif]')
+        return
+
+    if display:
+        # display the input image
+        input_image = cv2.imread(image_path)
+        cv2.imshow('Input Sudoku', input_image)
+        cv2.waitKey(0)
+
+    # run the sudoku-solver-cv algorithm
     sudoku_solver_cv = SudokuSolverCV()
-    final_result_img = sudoku_solver_cv.run(image_path=image_path, debug=False)
-    cv2.imwrite('results/sudoku5-result.jpg', final_result_img)
-    cv2.imshow('Final Sudoku Result', final_result_img)
-    cv2.waitKey(0)
+    final_result_img = sudoku_solver_cv.run(image_path=image_path, debug=debug)
+
+    # save the output image
+    if save:
+        output = f'result-{os.path.basename(image_path)}'
+        cv2.imwrite(output, final_result_img)
+        print(f'Main INFO: the output image has been successfully saved in path: {output}.')
+
+    if display:
+        # display the augmented solved sudoku image result
+        cv2.imshow('Final Sudoku Result', final_result_img)
+        cv2.waitKey(0)
+
+
+if __name__ == '__main__':
+    main()

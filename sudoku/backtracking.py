@@ -168,6 +168,7 @@ class Sudoku:
         Display the sudoku board.
         :return: None
         """
+        print(f'{__class__.__name__} INFO: sudoku board visualization.')
         for i in range(len(self._board)):
             if i % 3 == 0 and i != 0:
                 print('-----------------------')

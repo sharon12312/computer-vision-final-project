@@ -1,6 +1,7 @@
-import cv2
+import os
+import logging
 import numpy as np
-import os.path
+import cv2
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D
@@ -28,6 +29,10 @@ class DigitsNet:
     """
     def __init__(self, width=28, height=28, num_classes=10, epochs=100, batch_size=128,
                  model_path='../models/digits_classifier.h5'):
+        # disable the tensorflow warnings
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
+        logging.getLogger('tensorflow').setLevel(logging.FATAL)
+
         # image settings
         self._width = width
         self._height = height
@@ -189,7 +194,7 @@ class DigitsNet:
         :return: None
         """
         model.save(self._model_path, save_format='h5')
-        print(f'Model: {self._model_path} was saved successfully.')
+        print(f'{__class__.__name__} INFO: {self._model_path} was saved successfully.')
 
     def load_model(self):
         """
@@ -197,7 +202,7 @@ class DigitsNet:
         :return: the trained model
         """
         model = load_model(self._model_path)
-        print(f'Model: {self._model_path} was loaded successfully.')
+        print(f'{__class__.__name__} INFO: {self._model_path} was loaded successfully.')
         return model
 
     def predict(self, image):
@@ -209,7 +214,7 @@ class DigitsNet:
 
         # verify that the model was loaded correctly
         if self._model is None:
-            raise Exception('Caused by: cannot predict the image since the model is None.')
+            raise Exception('{__class__.__name__} ERROR: cannot predict the image since the model is None.')
 
         # resize the image to the given cnn input shape
         image = cv2.resize(src=image, dsize=(self._width, self._height), interpolation=cv2.INTER_AREA)
