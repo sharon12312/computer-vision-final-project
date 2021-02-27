@@ -3,7 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 from skimage.metrics import structural_similarity
-import sudoku_colver_cv
+import sudoku_solver_cv
 
 
 class EvaluateDigits:
@@ -210,7 +210,7 @@ class EvaluateImages:
 
 if __name__ == '__main__':
     # initial variables
-    sudoku_solver_cv = sudoku_colver_cv.SudokuSolverCV()
+    sudoku_solver_cv = sudoku_solver_cv.SudokuSolverCV()
     count = 1
 
     # initial images path
