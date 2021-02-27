@@ -271,7 +271,7 @@ class ImageProcessing:
         * cv2.drawContours() function draws contour outlines within the image.
 
         :param cell: ndarray, presents the cell digit (if exists)
-        :param debug: boolean, for visualization
+        :param debug: boolean, for visualization purposes
         :return: ndarray, digit image
         """
 

@@ -30,6 +30,8 @@ class SudokuSolverCV:
         # initial variables
         self._img_processing = ImageProcessing()
         self._digits_net = DigitsNet(model_path='models/digits_classifier.h5')
+        self.sudoku_board = None
+        self.solved_sudoku_board = None
 
         # initial settings
         self._MAX_ROW = 9
@@ -42,7 +44,7 @@ class SudokuSolverCV:
         returns the solution matrix if exists.
 
         :param board: ndarray, the sudoku matrix 2d array
-        :param debug: boolean, for the board visualization in the terminal
+        :param debug: boolean, for visualization purposes
         :return: tuple (ndarray, boolean),
             - the solved sudoku matrix if exists, otherwise return None
             - if True, the sudoku was solved successfully, otherwise False
@@ -116,7 +118,8 @@ class SudokuSolverCV:
 
                     # draw the result digit on the sudoku warped transformed image
                     cv2.putText(img=warped_sudoku_board, text=str(digit), org=(text_j, text_i),
-                                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(205, 0, 0), thickness=2)
+                                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(205, 0, 0),
+                                thickness=int(round(font_scale*2)))
 
         return warped_sudoku_board
 
@@ -242,6 +245,10 @@ class SudokuSolverCV:
         # solve the sudoku and display the solution if exists
         sudoku_solution, solved = self._solve_sudoku_matrix(board, debug=debug)
 
+        # store sudoku board figures for evaluation
+        self.sudoku_board = board
+        self.solved_sudoku_board = sudoku_solution
+
         # if the sudoku was not solved print an info message and return
         if not solved:
             print(f'{__class__.__name__} INFO: a sudoku solution has not been found.')
@@ -271,16 +278,31 @@ class SudokuSolverCV:
 
 
 def main():
+    def str2bool(v):
+        """
+        Parse a string type input to a boolean type.
+        :param v: the input value from the terminal arguments
+        :return: boolean
+        """
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     # define the given arguments variables: image-path, save-mode, visualize-mode and debug-mode
     args_parser = argparse.ArgumentParser(description='Performs an augmented solution within a given '
                                                       'sudoku board image.')
-    args_parser.add_argument('-i', '--image',  required=True,
+    args_parser.add_argument('-i', '--image', required=True,
                              help='the path to the input sudoku image')
-    args_parser.add_argument('-s', '--save', type=bool, default=True,
+    args_parser.add_argument('-s', '--save', type=str2bool, default=True,
                              help='save the augmented solved sudoku output image')
-    args_parser.add_argument('-v', '--visualize', type=bool, default=True,
+    args_parser.add_argument('-v', '--visualize', type=str2bool, default=True,
                              help='display the input image and the augmented solved sudoku output image')
-    args_parser.add_argument('-d', '--debug', type=bool, default=False,
+    args_parser.add_argument('-d', '--debug', type=str2bool, default=False,
                              help='visualization of the flow steps images')
     args = vars(args_parser.parse_args())
 
