@@ -29,20 +29,20 @@ The implementation follows:
 In this project, I used several external libraries that provide a few utilities for applying computer vision functions and achieving a high-efficiency performance. Please install the specific libraries for this project.
 
 #### Numpy
-`pip install -I numpy==1.19.2`
+`pip install numpy==1.19.2`
 
 #### OpenCV 
-`pip install -I opencv-contrib-python==4.4.0`
-`pip install -I opencv-contrib-python-headless==4.4.0`
+`pip install opencv-contrib-python==4.4.0` \
+`pip install opencv-contrib-python-headless==4.4.0`
 
 #### scikit-image
-`pip install -I scikit-image==0.18.1`
+`pip install scikit-image==0.18.1`
 
 #### TensorFlow
-`pip install -I tensorflow==2.3.1`
+`pip install tensorflow==2.3.1`
 
 #### Scikit-Learn
-`pip install -I scikit-learn==0.23.2`
+`pip install scikit-learn==0.23.2`
 
 ## Running The Program
 `python sudoku_solver_cv.py --image <path-to-the-input-image> --save True --visualize True --debug False` \
