@@ -1,4 +1,4 @@
-# Sudoku Solver Computer Vision
+# Sudoku Solver Computer Vision 
 
 ## Getting Started 
 In this project, I'm interested in using computer vision principles to solve a sudoku puzzle using OpenCV and augmented reality techniques. The final project goal is to solve a sudoku puzzle game in a given image. The input will be an image that includes a sudoku board, and the output will be an image that contains the sudoku solution.
